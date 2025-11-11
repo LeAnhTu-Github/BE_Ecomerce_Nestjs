@@ -17,14 +17,8 @@ export class UserDto {
   @ApiProperty()
   @IsString()
   @MinLength(3)
-  @MaxLength(30)
-  firstName: string | null;
-
-  @ApiProperty()
-  @IsString()
-  @MinLength(3)
-  @MaxLength(30)
-  lastName: string | null;
+  @MaxLength(255)
+  fullName: string;
 
   @ApiProperty()
   @IsNotEmpty()
@@ -32,6 +26,22 @@ export class UserDto {
   @IsEmail()
   email: string;
 
+  @ApiProperty({ required: false })
+  @IsString()
+  avatar?: string | null;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  phone?: string | null;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  googleId?: string | null;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  facebookId?: string | null;
+
   @Exclude()
-  password: string;
+  password?: string | null;
 }

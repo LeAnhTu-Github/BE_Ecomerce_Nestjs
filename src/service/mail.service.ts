@@ -47,15 +47,17 @@ export class MailService {
 
   async sendUserConfirmation(user: UserDto, token: string, otp: number) {
     const url = `${process.env.CLIENT_URL}/auth/confirm-email?token=${token}`;
+    // Extract first name from fullName for greeting
+    const firstName = user.fullName || "User";
     const html = this.confirmationTemplate({
-      name: user.firstName,
+      name: firstName,
       url,
       otp,
     });
 
     await this.transporter.sendMail({
       to: user.email,
-      subject: `Welcome ${user.firstName}! Confirm your email and start using the app!`,
+      subject: `Welcome ${firstName}! Confirm your email and start using the app!`,
       html,
     });
   }

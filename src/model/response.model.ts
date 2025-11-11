@@ -9,16 +9,15 @@ export class ApiResponseWrapper<T> {
 }
 
 // Response models
-export class SignInResponse {
-  @ApiProperty({ type: () => UserDto })
-  user: UserDto;
-
+export class TokenResponse {
   @ApiProperty({ example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." })
   accessToken: string;
 
   @ApiProperty({ example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." })
   refreshToken: string;
 }
+
+export class SignInResponse extends TokenResponse {}
 
 export class SignUpResponse extends UserDto {}
 

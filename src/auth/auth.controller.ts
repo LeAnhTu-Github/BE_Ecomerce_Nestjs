@@ -1,4 +1,14 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from "@nestjs/common";
 import { SignInDto } from "./dto/sign-in.dto";
 import { AuthService } from "./auth.service";
 import { Public } from "../decorator/public-route.decorator";
@@ -23,6 +33,8 @@ import {
   ApiResponse,
   ApiTags,
 } from "@nestjs/swagger";
+import { AuthGuard } from "@nestjs/passport";
+import { Response } from "express";
 
 @ApiTags("auth")
 @ApiExtraModels(
@@ -44,7 +56,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Sign in user" })
   @ApiOkResponse({
-    description: "User successfully signed in",
+    description: "User successfully signed in. Returns accessToken and refreshToken. Use /users/me endpoint to get user information.",
     type: SignInResponseWrapper,
   })
   @ApiResponse({
@@ -108,5 +120,31 @@ export class AuthController {
   })
   async refresh(@Body() refreshTokenDto: RefreshTokenDto) {
     return await this.authService.refresh(refreshTokenDto.refreshToken);
+  }
+
+  @Public()
+  @Get("google")
+  @UseGuards(AuthGuard("google"))
+  @ApiOperation({ summary: "Initiate Google OAuth login" })
+  @ApiOkResponse({
+    description: "Redirects to Google OAuth",
+  })
+  async googleAuth() {
+    // Guard redirects to Google
+  }
+
+  @Public()
+  @Get("google/callback")
+  @UseGuards(AuthGuard("google"))
+  @ApiOperation({ summary: "Google OAuth callback" })
+  @ApiResponse({
+    status: HttpStatus.FOUND,
+    description: "Redirects to frontend with accessToken and refreshToken in query parameters",
+  })
+  async googleAuthRedirect(@Req() req: any, @Res() res: Response) {
+    const result = await this.authService.googleLogin(req.user);
+    const frontendUrl = process.env.CLIENT_URL || "http://localhost:5173";
+    const redirectUrl = `${frontendUrl}/auth/google?accessToken=${encodeURIComponent(result.accessToken)}&refreshToken=${encodeURIComponent(result.refreshToken)}`;
+    return res.redirect(redirectUrl);
   }
 }

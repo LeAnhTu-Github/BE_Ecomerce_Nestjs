@@ -18,7 +18,7 @@ import { UserResponseWrapper } from "../model/response.model";
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Get("me")
+  @Get("info")
   @ApiOperation({ summary: "Get current user information" })
   @ApiOkResponse({
     description: "User information successfully retrieved",

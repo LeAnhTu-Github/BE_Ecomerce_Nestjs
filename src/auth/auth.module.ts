@@ -9,9 +9,11 @@ import { UserService } from "../user/user.service";
 import { TokenProvider } from "../provider/token.provider";
 import { MailService } from "../service/mail.service";
 import { OtpService } from "../service/otp.service";
+import { PassportModule } from "@nestjs/passport";
+import { GoogleStrategy } from "./strategies/google.strategy";
 
 @Module({
-  imports: [UserModule],
+  imports: [UserModule, PassportModule],
   controllers: [AuthController],
   providers: [
     PrismaService,
@@ -20,6 +22,7 @@ import { OtpService } from "../service/otp.service";
     TokenProvider,
     MailService,
     OtpService,
+    GoogleStrategy,
     Logger,
     {
       provide: APP_GUARD,

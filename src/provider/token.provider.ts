@@ -7,13 +7,13 @@ export class TokenProvider {
 
   generateTokens(payload: any): { accessToken: string; refreshToken: string } {
     const accessToken = this.jwtService.sign(payload);
-    const refreshToken = this.jwtService.sign(payload, { expiresIn: "7d" });
+    const refreshToken = this.jwtService.sign(payload, { expiresIn: "30d" });
 
     return { accessToken, refreshToken };
   }
 
   signEmailToken(userId: number): string {
-    return this.jwtService.sign({ userId }, { expiresIn: "1d" });
+    return this.jwtService.sign({ userId }, { expiresIn: "30d" });
   }
 
   verifyEmailToken(token: string): { userId: number } {

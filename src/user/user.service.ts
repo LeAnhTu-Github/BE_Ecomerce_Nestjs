@@ -50,7 +50,6 @@ export class UserService {
         },
         data: {
           isConfirmed: true,
-          // TODO: move this to separate method
           isActive: true,
         },
       });

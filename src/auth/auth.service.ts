@@ -29,6 +29,7 @@ import {
   ConfirmEmailResponse,
   SignInResponse,
   SignUpResponse,
+  TokenResponse,
 } from "../model/response.model";
 import { MailService } from "../service/mail.service";
 import { OtpService } from "../service/otp.service";
@@ -67,6 +68,11 @@ export class AuthService {
       throw new BadRequestException(USER_NOT_CONFIRMED_EMAIL);
     }
 
+    // Check if user has password (not Google-only user)
+    if (!user.password) {
+      throw new BadRequestException(INVALID_AUTH_CREDENTIALS);
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
@@ -77,14 +83,13 @@ export class AuthService {
       this.tokenProvider.generateTokens(user);
 
     return {
-      user: plainToInstance(UserDto, user),
       accessToken,
       refreshToken,
     };
   }
 
   async signUp(signUpDto: SignUpDto): Promise<SignUpResponse> {
-    const { firstName, lastName, email, password } = signUpDto;
+    const { fullName, email, password } = signUpDto;
 
     const passwordHash = await this.generatePasswordHash(password);
 
@@ -101,8 +106,7 @@ export class AuthService {
     try {
       const user = await this.prismaService.user.create({
         data: {
-          firstName,
-          lastName,
+          fullName,
           email,
           password: passwordHash,
         },
@@ -189,5 +193,64 @@ export class AuthService {
     } catch (e) {
       throw new InternalServerErrorException(e);
     }
+  }
+
+  async googleLogin(user: any): Promise<TokenResponse> {
+    const { googleId, email, fullName, avatar } = user;
+
+    // Check if user exists by googleId
+    let existingUser = await this.prismaService.user.findUnique({
+      where: {
+        googleId,
+      },
+    });
+
+    // If not found by googleId, check by email
+    if (!existingUser) {
+      existingUser = await this.prismaService.user.findUnique({
+        where: {
+          email,
+        },
+      });
+
+      // If user exists by email but doesn't have googleId, link the account
+      if (existingUser && !existingUser.googleId) {
+        existingUser = await this.prismaService.user.update({
+          where: {
+            id: existingUser.id,
+          },
+          data: {
+            googleId,
+            avatar: avatar || existingUser.avatar,
+            // Auto-confirm email for Google users
+            isConfirmed: true,
+            isActive: true,
+          },
+        });
+      }
+    }
+
+    // Create new user if doesn't exist
+    if (!existingUser) {
+      existingUser = await this.prismaService.user.create({
+        data: {
+          googleId,
+          email,
+          fullName,
+          avatar,
+          // Auto-confirm email for Google users
+          isConfirmed: true,
+          isActive: true,
+        },
+      });
+    }
+
+    const { accessToken, refreshToken } =
+      this.tokenProvider.generateTokens(existingUser);
+
+    return {
+      accessToken,
+      refreshToken,
+    };
   }
 }
