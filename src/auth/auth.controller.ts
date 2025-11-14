@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Query,
   Req,
   Res,
   UseGuards,
@@ -25,6 +26,7 @@ import {
 } from "../model/response.model";
 import { EmailConfirmationDto } from "./dto/email-confirmation.dto";
 import { RefreshTokenDto } from "./dto/refresh-token.dto";
+import { GoogleVerifyDto } from "./dto/google-verify.dto";
 import {
   ApiCreatedResponse,
   ApiExtraModels,
@@ -135,16 +137,36 @@ export class AuthController {
 
   @Public()
   @Get("google/callback")
-  @UseGuards(AuthGuard("google"))
   @ApiOperation({ summary: "Google OAuth callback" })
   @ApiResponse({
     status: HttpStatus.FOUND,
-    description: "Redirects to frontend with accessToken and refreshToken in query parameters",
+    description: "Redirects to frontend with authorization code in query parameters",
   })
-  async googleAuthRedirect(@Req() req: any, @Res() res: Response) {
-    const result = await this.authService.googleLogin(req.user);
+  async googleAuthCallback(@Query("code") code: string, @Res() res: Response) {
     const frontendUrl = process.env.CLIENT_URL || "http://localhost:5173";
-    const redirectUrl = `${frontendUrl}/auth/google?accessToken=${encodeURIComponent(result.accessToken)}&refreshToken=${encodeURIComponent(result.refreshToken)}`;
-    return res.redirect(redirectUrl);
+    if (!code) {
+      return res.redirect(`${frontendUrl}/auth/google?error=no_code`);
+    }
+    return res.redirect(`${frontendUrl}/auth/google?code=${code}`);
+  }
+
+  @Public()
+  @Post("google/verify")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Verify Google OAuth code and exchange for tokens" })
+  @ApiOkResponse({
+    description: "Successfully verified code and returns accessToken and refreshToken",
+    type: SignInResponseWrapper,
+  })
+  @ApiResponse({
+    status: HttpStatus.UNPROCESSABLE_ENTITY,
+    description: "Validation error",
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: "Invalid or expired authorization code",
+  })
+  async googleVerify(@Body() googleVerifyDto: GoogleVerifyDto) {
+    return await this.authService.googleVerifyCode(googleVerifyDto.code);
   }
 }

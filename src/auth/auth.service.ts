@@ -35,6 +35,7 @@ import { MailService } from "../service/mail.service";
 import { OtpService } from "../service/otp.service";
 import { EmailConfirmationDto } from "./dto/email-confirmation.dto";
 import { JwtService } from "@nestjs/jwt";
+import axios from "axios";
 
 @Injectable()
 export class AuthService {
@@ -252,5 +253,89 @@ export class AuthService {
       accessToken,
       refreshToken,
     };
+  }
+
+  async googleVerifyCode(code: string): Promise<SignInResponse> {
+    try {
+      // Exchange code with Google OAuth API to get access token
+      const params = new URLSearchParams();
+      params.append("code", code);
+      params.append("client_id", process.env.GOOGLE_CLIENT_ID || "");
+      params.append("client_secret", process.env.GOOGLE_CLIENT_SECRET || "");
+      params.append("redirect_uri", process.env.GOOGLE_CALLBACK_URL || "");
+      params.append("grant_type", "authorization_code");
+
+      const tokenResponse = await axios.post(
+        "https://oauth2.googleapis.com/token",
+        params.toString(),
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+        },
+      );
+
+      const { access_token, id_token } = tokenResponse.data;
+
+      if (!access_token) {
+        throw new BadRequestException("Failed to exchange code for access token");
+      }
+
+      // Get user profile from Google API
+      const profileResponse = await axios.get(
+        "https://www.googleapis.com/oauth2/v2/userinfo",
+        {
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+          },
+        },
+      );
+
+      const profile = profileResponse.data;
+
+      // Validate profile data
+      if (!profile || !profile.id || !profile.email) {
+        throw new BadRequestException("Invalid user profile from Google");
+      }
+
+      // Extract user data from profile
+      const { id: googleId, email, given_name, family_name, name, picture } =
+        profile;
+      const firstName = given_name || "";
+      const lastName = family_name || "";
+      const fullName =
+        `${firstName} ${lastName}`.trim() ||
+        name ||
+        email?.split("@")[0] ||
+        "User";
+
+      // Create user object for googleLogin method
+      const user = {
+        googleId,
+        email,
+        fullName,
+        avatar: picture,
+        accessToken: access_token,
+      };
+
+      // Use existing googleLogin method to handle user creation/login
+      return await this.googleLogin(user);
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
+      if (axios.isAxiosError(error)) {
+        const errorMessage =
+          error.response?.data?.error_description ||
+          error.response?.data?.error ||
+          "Failed to verify Google OAuth code";
+        throw new BadRequestException(errorMessage);
+      }
+
+      throw new InternalServerErrorException(
+        error?.message || "Failed to verify Google OAuth code",
+      );
+    }
   }
 }
