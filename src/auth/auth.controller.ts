@@ -126,28 +126,23 @@ export class AuthController {
 
   @Public()
   @Get("google")
-  @UseGuards(AuthGuard("google"))
   @ApiOperation({ summary: "Initiate Google OAuth login" })
   @ApiOkResponse({
     description: "Redirects to Google OAuth",
   })
-  async googleAuth() {
-    // Guard redirects to Google
-  }
-
-  @Public()
-  @Get("google/callback")
-  @ApiOperation({ summary: "Google OAuth callback" })
-  @ApiResponse({
-    status: HttpStatus.FOUND,
-    description: "Redirects to frontend with authorization code in query parameters",
-  })
-  async googleAuthCallback(@Query("code") code: string, @Res() res: Response) {
-    const frontendUrl = process.env.CLIENT_URL || "http://localhost:5173";
-    if (!code) {
-      return res.redirect(`${frontendUrl}/auth/google?error=no_code`);
-    }
-    return res.redirect(`${frontendUrl}/auth/google?code=${code}`);
+  async googleAuth(@Res() res: Response) {
+    const clientId = process.env.GOOGLE_CLIENT_ID || "";
+    const redirectUri = process.env.GOOGLE_CALLBACK_URL || "http://localhost:5173/auth/google/callback";
+    const scope = "openid email profile";
+    
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+      `client_id=${encodeURIComponent(clientId)}&` +
+      `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+      `response_type=code&` +
+      `scope=${encodeURIComponent(scope)}&` +
+      `access_type=online`;
+    
+    return res.redirect(googleAuthUrl);
   }
 
   @Public()

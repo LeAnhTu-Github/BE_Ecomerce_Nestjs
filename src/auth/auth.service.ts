@@ -262,6 +262,7 @@ export class AuthService {
       params.append("code", code);
       params.append("client_id", process.env.GOOGLE_CLIENT_ID || "");
       params.append("client_secret", process.env.GOOGLE_CLIENT_SECRET || "");
+      // Cập nhật: redirect_uri phải khớp với callback URL trong Google Console (FE URL)
       params.append("redirect_uri", process.env.GOOGLE_CALLBACK_URL || "");
       params.append("grant_type", "authorization_code");
 
