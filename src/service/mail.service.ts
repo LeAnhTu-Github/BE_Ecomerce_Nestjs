@@ -38,7 +38,7 @@ export class MailService {
   }
 
   private loadTemplate(templateName: string): handlebars.TemplateDelegate {
-    const templatesFolderPath = path.join(__dirname, "../../../templates"); // FIXME: path is not correct should be in src
+    const templatesFolderPath = path.join(__dirname, "../../templates"); // FIXME: path is not correct should be in src
     const templatePath = path.join(templatesFolderPath, templateName);
 
     const templateSource = fs.readFileSync(templatePath, "utf8");
