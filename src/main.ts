@@ -9,6 +9,7 @@ import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { GlobalExceptionFilter } from "./exception/global-exception.filter";
 import { getReasonPhrase } from "http-status-codes";
 import { ResponseMappingInterceptor } from "./interceptor/response-mapping.interceptor";
+import { LoggingInterceptor } from "./interceptor/logging.interceptor";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -41,7 +42,10 @@ async function bootstrap() {
 
   app.useGlobalFilters(new GlobalExceptionFilter(httpAdapter));
 
-  app.useGlobalInterceptors(new ResponseMappingInterceptor());
+  app.useGlobalInterceptors(
+    new LoggingInterceptor(),
+    new ResponseMappingInterceptor(),
+  );
 
   app.enableShutdownHooks();
 
