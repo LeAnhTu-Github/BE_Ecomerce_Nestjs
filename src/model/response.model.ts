@@ -8,6 +8,33 @@ export class ApiResponseWrapper<T> {
   data: T;
 }
 
+export class UploadImageResponse {
+  @ApiProperty({ example: "banner.png", description: "Original file name" })
+  fileName: string;
+
+  @ApiProperty({
+    example: "https://res.cloudinary.com/demo/image/upload/v1690000000/banner.png",
+    description: "Accessible image URL",
+  })
+  url: string;
+
+  @ApiProperty({
+    example: "ecommerce/banner",
+    description: "Cloudinary public identifier",
+  })
+  publicId: string;
+}
+
+export class UploadImageResponseWrapper extends ApiResponseWrapper<UploadImageResponse> {
+  @ApiProperty({ type: UploadImageResponse })
+  data: UploadImageResponse;
+}
+
+export class UploadImagesResponseWrapper extends ApiResponseWrapper<UploadImageResponse[]> {
+  @ApiProperty({ type: [UploadImageResponse] })
+  data: UploadImageResponse[];
+}
+
 // Response models
 export class TokenResponse {
   @ApiProperty({ example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." })
