@@ -11,4 +11,8 @@ export class ColorDto extends AbstractDto {
     message: "Please provide a valid color value",
   })
   value: string;
+
+  @IsNotEmpty()
+  @IsString()
+  storeId: string;
 }

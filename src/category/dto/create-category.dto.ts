@@ -1,8 +1,23 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsNotEmpty, IsString, IsUUID } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEqualTo } from "../../decorator/class-validation.decorator";
 
 export class CreateCategoryDto {
+  @ApiProperty({
+    description: "Store identifier",
+    type: String,
+    example: "c6f0d331-43c6-4dfb-b0ad-9745cb06d8f7",
+  })
+  @IsUUID()
+  storeId: string;
+
+  @ApiProperty({
+    description: "Billboard identifier",
+    type: String,
+    example: "de5f7e21-a1d3-4e0d-a7b7-86ef0f6fdc83",
+  })
+  @IsUUID()
+  billboardId: string;
+
   @ApiProperty({
     description: "Name of the category",
     type: String,
@@ -10,13 +25,4 @@ export class CreateCategoryDto {
   @IsString()
   @IsNotEmpty()
   name: string;
-
-  @ApiProperty({
-    description: "Parent category id",
-    type: Number,
-  })
-  @IsNumber()
-  @IsNotEqualTo("id")
-  @IsOptional()
-  parentId?: number;
 }

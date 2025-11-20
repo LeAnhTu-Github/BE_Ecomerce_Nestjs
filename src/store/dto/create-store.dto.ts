@@ -4,11 +4,9 @@ import {
   IsString,
   MaxLength,
   MinLength,
-  Validate,
 } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsFile } from "../../decorator/class-validation.decorator";
-import { UniqueFieldValidator } from "../../validation/unique-field.validator";
 
 export class CreateStoreDto {
   @ApiProperty({
@@ -19,24 +17,7 @@ export class CreateStoreDto {
   })
   @IsNotEmpty()
   @MinLength(5)
-  @Validate(UniqueFieldValidator, ["name", "store"])
   name: string;
-
-  @ApiProperty({
-    description: "Country id of the store",
-    required: true,
-    example: 1,
-  })
-  @IsString()
-  countryId: number;
-
-  @ApiProperty({
-    description: "City id of the store",
-    required: true,
-    example: 1,
-  })
-  @IsString()
-  cityId: number;
 
   @ApiProperty({
     description: "Address of the store",

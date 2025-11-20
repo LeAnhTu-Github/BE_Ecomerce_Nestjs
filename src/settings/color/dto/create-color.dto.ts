@@ -1,7 +1,11 @@
-import { IsNotEmpty, IsString } from "class-validator";
+import { IsNotEmpty, IsString, IsUUID } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
 
 export class CreateColorDto {
+  @ApiProperty({ type: String, description: "ID of the store", example: "c6f0..." })
+  @IsUUID()
+  storeId: string;
+
   @ApiProperty({ type: String, description: "Color name", example: "Red" })
   @IsNotEmpty()
   @IsString()

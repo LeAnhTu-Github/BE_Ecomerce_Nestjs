@@ -7,4 +7,14 @@ export class SizeDto extends AbstractDto {
   @IsNotEmpty()
   @IsString()
   name: string;
+
+  @ApiProperty({ type: String, description: "Size value", example: "extra-large" })
+  @IsNotEmpty()
+  @IsString()
+  value: string;
+
+  @ApiProperty({ type: String, description: "Store ID", example: "c6f0..." })
+  @IsNotEmpty()
+  @IsString()
+  storeId: string;
 }

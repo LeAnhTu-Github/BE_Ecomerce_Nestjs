@@ -14,11 +14,9 @@ export class StoreDto extends AbstractDto {
   @MinLength(5)
   name: string;
 
+  @IsNotEmpty()
   @IsString()
-  countryId: number;
-
-  @IsString()
-  cityId: number;
+  slug: string;
 
   @IsNotEmpty()
   @MinLength(10)

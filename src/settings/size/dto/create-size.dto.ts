@@ -1,10 +1,18 @@
-import { AbstractDto } from "../../../lib/abstract-dto";
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsString } from "class-validator";
+import { IsNotEmpty, IsString, IsUUID } from "class-validator";
 
-export class CreateSizeDto extends AbstractDto {
+export class CreateSizeDto {
+  @ApiProperty({ type: String, description: "ID of the store", example: "c6f0..." })
+  @IsUUID()
+  storeId: string;
+
   @ApiProperty({ type: String, description: "Size name", example: "XL" })
   @IsNotEmpty()
   @IsString()
   name: string;
+
+  @ApiProperty({ type: String, description: "Size value", example: "extra-large" })
+  @IsNotEmpty()
+  @IsString()
+  value: string;
 }

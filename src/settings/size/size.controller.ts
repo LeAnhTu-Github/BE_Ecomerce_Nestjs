@@ -5,9 +5,10 @@ import {
   Get,
   HttpStatus,
   Param,
-  ParseIntPipe,
+  ParseUUIDPipe,
   Post,
   Put,
+  Query,
   UseGuards,
 } from "@nestjs/common";
 import {
@@ -81,8 +82,8 @@ export class SizeController {
     status: HttpStatus.FORBIDDEN,
     description: "Forbidden - Admin role required",
   })
-  findAll() {
-    return this.sizeService.findAll();
+  findAll(@Query("storeId", new ParseUUIDPipe()) storeId: string) {
+    return this.sizeService.findAll(storeId);
   }
 
   @Roles([Role.ADMIN])
@@ -104,8 +105,11 @@ export class SizeController {
     status: HttpStatus.FORBIDDEN,
     description: "Forbidden - Admin role required",
   })
-  findOne(@Param("id", ParseIntPipe) id: number) {
-    return this.sizeService.findOne(id);
+  findOne(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Query("storeId", new ParseUUIDPipe()) storeId: string,
+  ) {
+    return this.sizeService.findOne(id, storeId);
   }
 
   @Roles([Role.ADMIN])
@@ -131,8 +135,12 @@ export class SizeController {
     status: HttpStatus.UNPROCESSABLE_ENTITY,
     description: "Validation error",
   })
-  update(@Param("id", ParseIntPipe) id: number, @Body() data: UpdateSizeDto) {
-    return this.sizeService.update(id, data);
+  update(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Query("storeId", new ParseUUIDPipe()) storeId: string,
+    @Body() data: UpdateSizeDto,
+  ) {
+    return this.sizeService.update(id, storeId, data);
   }
 
   @Roles([Role.ADMIN])
@@ -154,7 +162,10 @@ export class SizeController {
     status: HttpStatus.FORBIDDEN,
     description: "Forbidden - Admin role required",
   })
-  remove(@Param("id", ParseIntPipe) id: number) {
-    return this.sizeService.remove(id);
+  remove(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Query("storeId", new ParseUUIDPipe()) storeId: string,
+  ) {
+    return this.sizeService.remove(id, storeId);
   }
 }

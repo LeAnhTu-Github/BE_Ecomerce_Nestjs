@@ -5,9 +5,10 @@ import {
   Get,
   HttpStatus,
   Param,
-  ParseIntPipe,
+  ParseUUIDPipe,
   Patch,
   Post,
+  Query,
 } from "@nestjs/common";
 import { ProductService } from "./product.service";
 import { CreateProductDto } from "./dto/create-product.dto";
@@ -56,8 +57,8 @@ export class ProductController {
     description: "Products successfully retrieved",
     type: ProductListResponseWrapper,
   })
-  findAll() {
-    return this.productService.findAll();
+  findAll(@Query("storeId", new ParseUUIDPipe()) storeId: string) {
+    return this.productService.findAll(storeId);
   }
 
   @Get(":id")
@@ -70,8 +71,11 @@ export class ProductController {
     status: HttpStatus.NOT_FOUND,
     description: "Product not found",
   })
-  findOne(@Param("id", ParseIntPipe) id: number) {
-    return this.productService.findOne(id);
+  findOne(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Query("storeId", new ParseUUIDPipe()) storeId: string,
+  ) {
+    return this.productService.findOne(id, storeId);
   }
 
   @Patch(":id")
@@ -89,10 +93,11 @@ export class ProductController {
     description: "Validation error",
   })
   update(
-    @Param("id", ParseIntPipe) id: number,
+    @Param("id", ParseUUIDPipe) id: string,
+    @Query("storeId", new ParseUUIDPipe()) storeId: string,
     @Body() updateProductDto: UpdateProductDto,
   ) {
-    return this.productService.update(id, updateProductDto);
+    return this.productService.update(id, storeId, updateProductDto);
   }
 
   @Delete(":id")
@@ -105,7 +110,10 @@ export class ProductController {
     status: HttpStatus.NOT_FOUND,
     description: "Product not found",
   })
-  remove(@Param("id", ParseIntPipe) id: number) {
-    return this.productService.remove(id);
+  remove(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Query("storeId", new ParseUUIDPipe()) storeId: string,
+  ) {
+    return this.productService.remove(id, storeId);
   }
 }

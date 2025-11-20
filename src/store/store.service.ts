@@ -13,6 +13,7 @@ import { CloudinaryService } from "../cloudinary/cloudinary.service";
 import { plainToInstance } from "class-transformer";
 import { StoreDto } from "./dto/store.dto";
 import { ENTITY_NOT_FOUND } from "../lib/error-messages";
+import { randomUUID } from "crypto";
 
 @Injectable()
 export class StoreService {
@@ -22,14 +23,43 @@ export class StoreService {
     @Inject(REQUEST) private readonly request: SessionRequest,
   ) {}
 
+  private sanitizeSlug(name: string): string {
+    const normalized = name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)+/g, "");
+
+    return normalized || randomUUID();
+  }
+
+  private async generateUniqueSlug(base: string): Promise<string> {
+    let slug = base;
+    let attempt = 1;
+
+    while (true) {
+      const existing = await this.prismaService.store.findUnique({
+        where: { slug },
+      });
+
+      if (!existing) {
+        return slug;
+      }
+
+      slug = `${base}-${attempt}`;
+      attempt += 1;
+    }
+  }
+
   async create(
     files: { logo: Express.Multer.File[]; banner?: Express.Multer.File[] },
     createStoreDto: CreateStoreDto,
   ): Promise<StoreDto> {
-    const { name, address, cityId, countryId } = createStoreDto;
+    const { name, address } = createStoreDto;
     const { logo, banner } = files;
 
-    let logoUrl: string | undefined, bannerUrl: string | undefined;
+    let logoUrl: string | undefined;
+    let bannerUrl: string | undefined;
 
     try {
       const logoUploadResponse = await this.cloudinaryService.uploadFile(
@@ -51,15 +81,16 @@ export class StoreService {
       }
     }
 
+    const slug = await this.generateUniqueSlug(this.sanitizeSlug(name));
+
     const store = await this.prismaService.store.create({
       data: {
         name,
         address,
-        countryId: +countryId,
-        cityId: +cityId,
+        slug,
         logo: logoUrl as string,
         userId: this.request.user.id,
-        ...(banner && { banner: bannerUrl }),
+        ...(bannerUrl && { banner: bannerUrl }),
       },
     });
 
@@ -71,13 +102,14 @@ export class StoreService {
       where: {
         userId: this.request.user.id,
       },
+      orderBy: { createdAt: "desc" },
     });
 
     return plainToInstance(StoreDto, stores);
   }
 
-  async findOne(id: number): Promise<StoreDto> {
-    const store = await this.prismaService.store.findUnique({
+  async findOne(id: string): Promise<StoreDto> {
+    const store = await this.prismaService.store.findFirst({
       where: {
         id,
         userId: this.request.user.id,
@@ -91,15 +123,33 @@ export class StoreService {
     return plainToInstance(StoreDto, store);
   }
 
-  update(id: number, updateStoreDto: UpdateStoreDto) {
-    // TODO: implement update store
+  async update(id: string, updateStoreDto: UpdateStoreDto): Promise<StoreDto> {
+    const store = await this.findOne(id);
+    const data: Record<string, unknown> = {
+      ...updateStoreDto,
+    };
+
+    if (updateStoreDto.name && updateStoreDto.name !== store.name) {
+      const slug = await this.generateUniqueSlug(
+        this.sanitizeSlug(updateStoreDto.name),
+      );
+      data.slug = slug;
+    }
+
+    const updated = await this.prismaService.store.update({
+      where: { id },
+      data,
+    });
+
+    return plainToInstance(StoreDto, updated);
   }
 
-  async remove(id: number): Promise<StoreDto> {
+  async remove(id: string): Promise<StoreDto> {
+    await this.findOne(id);
+
     const deletedStore = await this.prismaService.store.delete({
       where: {
         id,
-        userId: this.request.user.id,
       },
     });
 

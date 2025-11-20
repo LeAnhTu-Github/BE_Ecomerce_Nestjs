@@ -5,9 +5,10 @@ import {
   Get,
   HttpStatus,
   Param,
-  ParseIntPipe,
+  ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from "@nestjs/common";
 import { CategoryService } from "./category.service";
@@ -52,7 +53,7 @@ export class CategoryController {
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
-    description: "Parent category not found or validation error",
+    description: "Validation error",
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
@@ -85,8 +86,8 @@ export class CategoryController {
     status: HttpStatus.FORBIDDEN,
     description: "Forbidden - Admin role required",
   })
-  findAll() {
-    return this.categoryService.findAll();
+  findAll(@Query("storeId", new ParseUUIDPipe()) storeId: string) {
+    return this.categoryService.findAll(storeId);
   }
 
   @Roles([Role.ADMIN])
@@ -108,27 +109,11 @@ export class CategoryController {
     status: HttpStatus.FORBIDDEN,
     description: "Forbidden - Admin role required",
   })
-  findOne(@Param("id", ParseIntPipe) id: number) {
-    return this.categoryService.findOne(id);
-  }
-
-  @Roles([Role.ADMIN])
-  @Get(":id/subcategories")
-  @ApiOperation({ summary: "Get subcategories by parent category ID" })
-  @ApiOkResponse({
-    description: "Subcategories successfully retrieved",
-    type: CategoryListResponseWrapper,
-  })
-  @ApiResponse({
-    status: HttpStatus.UNAUTHORIZED,
-    description: "Unauthorized",
-  })
-  @ApiResponse({
-    status: HttpStatus.FORBIDDEN,
-    description: "Forbidden - Admin role required",
-  })
-  findSubcategoriesByParentId(@Param("id", ParseIntPipe) parentId: number) {
-    return this.categoryService.findSubcategoriesByParentId(parentId);
+  findOne(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Query("storeId", new ParseUUIDPipe()) storeId: string,
+  ) {
+    return this.categoryService.findOne(id, storeId);
   }
 
   @Roles([Role.ADMIN])
@@ -144,7 +129,7 @@ export class CategoryController {
   })
   @ApiResponse({
     status: HttpStatus.UNPROCESSABLE_ENTITY,
-    description: "Validation error or parent category cannot be itself",
+    description: "Validation error",
   })
   @ApiResponse({
     status: HttpStatus.UNAUTHORIZED,
@@ -155,10 +140,11 @@ export class CategoryController {
     description: "Forbidden - Admin role required",
   })
   update(
-    @Param("id", ParseIntPipe) id: number,
+    @Param("id", ParseUUIDPipe) id: string,
+    @Query("storeId", new ParseUUIDPipe()) storeId: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
   ) {
-    return this.categoryService.update(id, updateCategoryDto);
+    return this.categoryService.update(id, storeId, updateCategoryDto);
   }
 
   @Roles([Role.ADMIN])
@@ -180,7 +166,10 @@ export class CategoryController {
     status: HttpStatus.FORBIDDEN,
     description: "Forbidden - Admin role required",
   })
-  remove(@Param("id", ParseIntPipe) id: number) {
-    return this.categoryService.remove(id);
+  remove(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Query("storeId", new ParseUUIDPipe()) storeId: string,
+  ) {
+    return this.categoryService.remove(id, storeId);
   }
 }

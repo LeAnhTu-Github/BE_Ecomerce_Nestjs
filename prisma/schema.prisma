@@ -3,9 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  directUrl  = env("DATABASE_URL_UNPOOLED")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 enum Role {
@@ -28,13 +28,15 @@ model User {
   createdBy         String?           @map("created_by") @db.VarChar(64)
   updatedBy         String?           @map("updated_by") @db.VarChar(64)
   passwordChangedAt DateTime?         @map("password_changed_at")
-  googleId          String?          @unique @map("google_id") @db.VarChar(255)
-  facebookId        String?          @unique @map("facebook_id") @db.VarChar(255)
+  googleId          String?           @unique @map("google_id") @db.VarChar(255)
+  facebookId        String?           @unique @map("facebook_id") @db.VarChar(255)
   createdAt         DateTime?         @default(now()) @map("created_at")
   updatedAt         DateTime?         @updatedAt @map("updated_at")
   ConfirmationOtp   ConfirmationOtp?
   ResetPasswordOtp  ResetPasswordOtp?
-  Store             Store?
+  stores            Store[]
+  carts             Cart[]
+  orders            Order[]
 
   @@map("users")
 }
@@ -60,125 +62,191 @@ model ResetPasswordOtp {
 }
 
 model Store {
-  id        Int       @id @default(autoincrement())
-  userId    Int       @unique @map("user_id")
-  name      String    @unique
-  slug      String    @unique() @default(uuid()) @db.VarChar(255)
-  address   String    @unique
-  logo      String
-  banner    String?
-  cityId    Int       @map("city_id")
-  countryId Int       @map("country_id")
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  city      City      @relation(fields: [cityId], references: [id])
-  country   Country   @relation(fields: [countryId], references: [id])
-  user      User      @relation(fields: [userId], references: [id])
-  Product   Product[]
+  id         String      @id @default(uuid())
+  name       String
+  userId     Int
+  slug       String      @unique @default(uuid()) @db.VarChar(255)
+  address    String?
+  logo       String?
+  banner     String?
+  billboards Billboard[] @relation("StoreToBillboard")
+  categories Category[]  @relation("StoreToCategory")
+  products   Product[]   @relation("StoreToProduct")
+  sizes      Size[]      @relation("StoreToSize")
+  colors     Color[]     @relation("StoreToColor")
+  orders     Order[]     @relation("StoreToOrder")
+  carts      Cart[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  user       User        @relation(fields: [userId], references: [id])
 
+  @@unique([name, userId])
+  @@index([userId])
   @@map("stores")
 }
 
-model Color {
-  id                     Int                      @id @default(autoincrement())
-  name                   String
-  value                  String
-  createdAt              DateTime                 @default(now()) @map("created_at")
-  updatedAt              DateTime                 @updatedAt @map("updated_at")
-  ColorsOnSizesOnProduct ColorsOnSizesOnProduct[]
+model Billboard {
+  id         String     @id @default(uuid())
+  storeId    String
+  label      String
+  imageUrl   String
+  categories Category[] @relation("BillboardToCategory")
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  store      Store      @relation("StoreToBillboard", fields: [storeId], references: [id])
 
-  @@map("colors")
-}
-
-model Size {
-  id                     Int                      @id @default(autoincrement())
-  name                   String
-  createdAt              DateTime                 @default(now()) @map("created_at")
-  updatedAt              DateTime                 @updatedAt @map("updated_at")
-  ColorsOnSizesOnProduct ColorsOnSizesOnProduct[]
-
-  @@map("sizes")
-}
-
-model Product {
-  id                     Int                      @id @default(autoincrement())
-  title                  String
-  description            String
-  slug                   String                   @unique() @default(uuid()) @db.VarChar(255)
-  price                  Decimal                  @db.Decimal(8, 2)
-  discount               Decimal?                 @default(0) @db.Decimal(5, 2)
-  storeId                Int                      @map("store_id")
-  mainImage              String                   @map("main_image")
-  isPublished            Boolean?                 @default(false) @map("is_published")
-  ProductImage           ProductImage[]
-  createdAt              DateTime                 @default(now()) @map("created_at")
-  updatedAt              DateTime                 @updatedAt @map("updated_at")
-  store                  Store                    @relation(fields: [storeId], references: [id])
-  ColorsOnSizesOnProduct ColorsOnSizesOnProduct[]
-  Category               Category?                @relation(fields: [categoryId], references: [id])
-  categoryId             Int?
-
-  @@map("products")
-}
-
-model ProductImage {
-  id        Int      @id @default(autoincrement())
-  productId Int      @map("product_id")
-  image     String
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  product   Product  @relation(fields: [productId], references: [id])
-
-  @@map("product_images")
-}
-
-model ColorsOnSizesOnProduct {
-  id            Int      @id @default(autoincrement())
-  productId     Int      @map("product_id")
-  colorId       Int      @map("color_id")
-  sizeId        Int      @map("size_id")
-  stockQuantity Int?     @default(1) @map("stock_quantity")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-  product       Product  @relation(fields: [productId], references: [id])
-  color         Color    @relation(fields: [colorId], references: [id])
-  size          Size     @relation(fields: [sizeId], references: [id])
-
-  @@map("colors_on_sizes_on_products")
+  @@index([storeId])
+  @@map("billboards")
 }
 
 model Category {
-  id        Int       @id @default(autoincrement())
-  name      String    @unique
-  slug      String    @unique() @default(uuid()) @db.VarChar(255)
-  parentId  Int?      @map("parent_id")
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  Product   Product[]
+  id          String    @id @default(uuid())
+  storeId     String
+  billboardId String
+  name        String
+  products    Product[] @relation("CategoryToProduct")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  store       Store     @relation("StoreToCategory", fields: [storeId], references: [id])
+  billboard   Billboard @relation("BillboardToCategory", fields: [billboardId], references: [id])
 
+  @@unique([storeId, name])
+  @@index([storeId])
+  @@index([billboardId])
   @@map("categories")
 }
 
-model Country {
-  id          Int      @id @default(autoincrement())
-  name        String
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  countryCode String   @unique @map("country_code")
-  City        City[]
-  Store       Store[]
+model Size {
+  id        String    @id @default(uuid())
+  storeId   String
+  name      String
+  value     String
+  products  Product[] @relation("SizeToProduct")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  store     Store     @relation("StoreToSize", fields: [storeId], references: [id])
 
-  @@map("countries")
+  @@unique([storeId, value])
+  @@index([storeId])
+  @@map("sizes")
 }
 
-model City {
-  id        Int      @id @default(autoincrement())
+model Color {
+  id        String    @id @default(uuid())
+  storeId   String
   name      String
-  countryId Int      @map("country_id")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  country   Country  @relation(fields: [countryId], references: [id])
-  Store     Store[]
+  value     String
+  products  Product[] @relation("ColorToProduct")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  store     Store     @relation("StoreToColor", fields: [storeId], references: [id])
 
-  @@map("cities")
+  @@unique([storeId, value])
+  @@index([storeId])
+  @@map("colors")
+}
+
+model Product {
+  id          String      @id @default(uuid())
+  storeId     String
+  categoryId  String
+  name        String
+  description String?
+  price       Decimal     @db.Decimal(10, 2)
+  isFeatured  Boolean     @default(false)
+  isArchived  Boolean     @default(false)
+  sizeId      String
+  colorId     String
+  images      Image[]
+  orderItems  OrderItem[]
+  cartItems   CartItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  store       Store       @relation("StoreToProduct", fields: [storeId], references: [id])
+  category    Category    @relation("CategoryToProduct", fields: [categoryId], references: [id])
+  size        Size        @relation("SizeToProduct", fields: [sizeId], references: [id])
+  color       Color       @relation("ColorToProduct", fields: [colorId], references: [id])
+
+  @@unique([storeId, name])
+  @@index([storeId])
+  @@index([categoryId])
+  @@index([sizeId])
+  @@index([colorId])
+  @@map("products")
+}
+
+model Image {
+  id        String   @id @default(uuid())
+  productId String
+  url       String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("images")
+}
+
+model Order {
+  id         String      @id @default(uuid())
+  storeId    String
+  userId     Int?
+  isPaid     Boolean     @default(false)
+  phone      String      @default("")
+  address    String      @default("")
+  orderItems OrderItem[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  store      Store       @relation("StoreToOrder", fields: [storeId], references: [id])
+  user       User?       @relation(fields: [userId], references: [id])
+
+  @@index([storeId])
+  @@index([userId])
+  @@index([storeId, userId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  productId String
+  quantity  Int     @default(1)
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+model Cart {
+  id        String     @id @default(uuid())
+  userId    Int?
+  storeId   String
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  user      User?      @relation(fields: [userId], references: [id])
+  store     Store      @relation(fields: [storeId], references: [id])
+
+  @@unique([userId, storeId])
+  @@index([userId])
+  @@index([storeId])
+  @@map("carts")
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  cartId    String
+  productId String
+  quantity  Int      @default(1)
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, productId])
+  @@index([cartId])
+  @@index([productId])
+  @@map("cart_items")
 }

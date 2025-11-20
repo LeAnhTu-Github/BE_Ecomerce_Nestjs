@@ -5,9 +5,10 @@ import {
   Get,
   HttpStatus,
   Param,
-  ParseIntPipe,
+  ParseUUIDPipe,
   Post,
   Put,
+  Query,
   UseGuards,
 } from "@nestjs/common";
 import { ColorService } from "./color.service";
@@ -81,8 +82,8 @@ export class ColorController {
     status: HttpStatus.FORBIDDEN,
     description: "Forbidden - Admin role required",
   })
-  findAll() {
-    return this.colorService.findAll();
+  findAll(@Query("storeId", new ParseUUIDPipe()) storeId: string) {
+    return this.colorService.findAll(storeId);
   }
 
   @Roles([Role.ADMIN])
@@ -104,8 +105,11 @@ export class ColorController {
     status: HttpStatus.FORBIDDEN,
     description: "Forbidden - Admin role required",
   })
-  findOne(@Param("id", ParseIntPipe) id: number) {
-    return this.colorService.findOne(id);
+  findOne(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Query("storeId", new ParseUUIDPipe()) storeId: string,
+  ) {
+    return this.colorService.findOne(id, storeId);
   }
 
   @Roles([Role.ADMIN])
@@ -131,8 +135,12 @@ export class ColorController {
     status: HttpStatus.UNPROCESSABLE_ENTITY,
     description: "Validation error",
   })
-  update(@Param("id", ParseIntPipe) id: number, @Body() data: UpdateColorDto) {
-    return this.colorService.update(id, data);
+  update(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Query("storeId", new ParseUUIDPipe()) storeId: string,
+    @Body() data: UpdateColorDto,
+  ) {
+    return this.colorService.update(id, storeId, data);
   }
 
   @Roles([Role.ADMIN])
@@ -154,7 +162,10 @@ export class ColorController {
     status: HttpStatus.FORBIDDEN,
     description: "Forbidden - Admin role required",
   })
-  remove(@Param("id", ParseIntPipe) id: number) {
-    return this.colorService.remove(id);
+  remove(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Query("storeId", new ParseUUIDPipe()) storeId: string,
+  ) {
+    return this.colorService.remove(id, storeId);
   }
 }

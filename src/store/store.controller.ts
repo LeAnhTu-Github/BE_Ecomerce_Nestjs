@@ -6,7 +6,7 @@ import {
   HttpStatus,
   Param,
   ParseFilePipe,
-  ParseIntPipe,
+  ParseUUIDPipe,
   Patch,
   Post,
   UploadedFiles,
@@ -114,7 +114,7 @@ export class StoreController {
     status: HttpStatus.UNAUTHORIZED,
     description: "Unauthorized",
   })
-  findOne(@Param("id", ParseIntPipe) id: number): Promise<StoreDto> {
+  findOne(@Param("id", ParseUUIDPipe) id: string): Promise<StoreDto> {
     return this.storeService.findOne(id);
   }
 
@@ -137,7 +137,7 @@ export class StoreController {
     description: "Unauthorized",
   })
   update(
-    @Param("id", ParseIntPipe) id: number,
+    @Param("id", ParseUUIDPipe) id: string,
     @Body() updateStoreDto: UpdateStoreDto,
   ) {
     return this.storeService.update(id, updateStoreDto);
@@ -157,7 +157,7 @@ export class StoreController {
     status: HttpStatus.UNAUTHORIZED,
     description: "Unauthorized",
   })
-  remove(@Param("id", ParseIntPipe) id: number): Promise<StoreDto> {
+  remove(@Param("id", ParseUUIDPipe) id: string): Promise<StoreDto> {
     return this.storeService.remove(id);
   }
 }

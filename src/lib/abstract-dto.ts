@@ -1,10 +1,10 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsDate, IsNumber } from "class-validator";
+import { IsDate, IsString } from "class-validator";
 
 export class AbstractDto {
-  @ApiProperty({ type: Number, description: "Unique identifier" })
-  @IsNumber()
-  id: number;
+  @ApiProperty({ type: String, description: "Unique identifier" })
+  @IsString()
+  id: string;
 
   @ApiProperty({ type: Date, description: "Date of creation" })
   @IsDate()
